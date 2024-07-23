@@ -63,8 +63,6 @@ open class JTACMonthView: UICollectionView {
     /// then whenever you click on a datecell, you may notice a very fast
     /// refreshing of the date-cells both left and right of the cell you
     /// just selected.
-    @available(*, unavailable, renamed: "allowsRangedSelection")
-    open var isRangeSelectionUsed: Bool = false
     open var allowsRangedSelection: Bool = false
   
     open var rangeSelectionMode: RangeSelectionMode = .segmented
@@ -112,7 +110,7 @@ open class JTACMonthView: UICollectionView {
     }
     
     // Configuration parameters from the dataSource
-    var _cachedConfiguration: ConfigurationParameters!
+    var _cachedConfiguration: ConfigurationParameters?
     // Set the start of the month
     var startOfMonthCache: Date!
     // Set the end of month

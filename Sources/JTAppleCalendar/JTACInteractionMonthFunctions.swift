@@ -215,7 +215,13 @@ extension JTACMonthView {
     /// - Parameter completionHandler: This closure will run after
     ///                                the reload is complete
     public func reloadData(withAnchor date: Date? = nil, completionHandler: (() -> Void)? = nil) {
-        if isReloadDataInProgress { return }
+        if isReloadDataInProgress {
+            calendarViewLayout.delayedExecutionClosure.append {[weak self] in
+                guard let _ = self else { return }
+                completionHandler?()
+            }
+            return
+        }
         if isScrollInProgress {
             scrollDelayedExecutionClosure.append {[unowned self] in
                 self.reloadData(completionHandler: completionHandler)
@@ -433,7 +439,7 @@ extension JTACMonthView {
         
         switch scrollDirection {
         case .horizontal:
-            if calendarViewLayout.thereAreHeaders || _cachedConfiguration.generateOutDates == .tillEndOfGrid {
+            if calendarViewLayout.thereAreHeaders || _cachedConfiguration?.generateOutDates == .tillEndOfGrid {
                 fixedScrollSize = calendarViewLayout.sizeOfContentForSection(0)
             } else {
                 fixedScrollSize = frame.width
@@ -528,6 +534,7 @@ extension JTACMonthView {
                 self.scrollToDate(date,
                                   triggerScrollToDateDelegate: triggerScrollToDateDelegate,
                                   animateScroll: animateScroll,
+                                  preferredScrollPosition: preferredScrollPosition,
                                   extraAddedOffset: extraAddedOffset,
                                   completionHandler: completionHandler)
             }
@@ -547,16 +554,21 @@ extension JTACMonthView {
         if retrievedPathsFromDates.isEmpty { return }
         let sectionIndexPath = pathsFromDates([date])[0]
         
-        guard let point = targetPointForItemAt(indexPath: sectionIndexPath) else {
-            assert(false, "Could not determine CGPoint. This is an error. contact developer on github. In production, there will not be a crash, but scrolling will not occur")
-            return
+        if scrollingMode == .none {
+            self.scrollToItem(at: sectionIndexPath,
+                              at: preferredScrollPosition ?? (scrollDirection == .horizontal ? .left : .top),
+                              animated: animateScroll)
+        } else {
+            guard let point = targetPointForItemAt(indexPath: sectionIndexPath) else {
+                assert(false, "Could not determine CGPoint. This is an error. contact developer on github. In production, there will not be a crash, but scrolling will not occur")
+                return
+            }
+            scrollTo(point: point,
+                     triggerScrollToDateDelegate: triggerScrollToDateDelegate,
+                     isAnimationEnabled: animateScroll,
+                     extraAddedOffset: extraAddedOffset,
+                     completionHandler: completionHandler)
         }
-
-        scrollTo(point: point,
-                 triggerScrollToDateDelegate: triggerScrollToDateDelegate,
-                 isAnimationEnabled: animateScroll,
-                 extraAddedOffset: extraAddedOffset,
-                 completionHandler: completionHandler)
     }
     
     /// Scrolls the calendar view to the start of a section view header.

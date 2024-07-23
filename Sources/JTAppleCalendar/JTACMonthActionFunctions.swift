@@ -121,46 +121,56 @@ extension JTACMonthView {
         }
     }
     
-    func setupMonthInfoDataForStartAndEndDate(with config: ConfigurationParameters? = nil) -> CalendarData {
+    func setupMonthInfoDataForStartAndEndDate(with optionalConfig: ConfigurationParameters? = nil) -> CalendarData {
         var months = [Month]()
         var monthMap = [Int: Int]()
         var totalSections = 0
         var totalDays = 0
         
-        var validConfig = config
-        if validConfig == nil { validConfig = calendarDataSource?.configureCalendar(self) }
-        if let validConfig = validConfig {
-            let comparison = validConfig.calendar.compare(validConfig.startDate, to: validConfig.endDate, toGranularity: .nanosecond)
-            if comparison == ComparisonResult.orderedDescending {
-                assert(false, "Error, your start date cannot be greater than your end date\n")
-                return (CalendarData(months: [], totalSections: 0, sectionToMonthMap: [:], totalDays: 0))
-            }
-            
-            // Set the new cache
-            _cachedConfiguration = validConfig
-            
-            if let
-                startMonth = calendar.startOfMonth(for: validConfig.startDate),
-                let endMonth = calendar.endOfMonth(for: validConfig.endDate) {
-                startOfMonthCache = startMonth
-                endOfMonthCache   = endMonth
-                // Create the parameters for the date format generator
-                let parameters = ConfigurationParameters(startDate: startOfMonthCache,
-                                                         endDate: endOfMonthCache,
-                                                         numberOfRows: validConfig.numberOfRows,
-                                                         calendar: calendar,
-                                                         generateInDates: validConfig.generateInDates,
-                                                         generateOutDates: validConfig.generateOutDates,
-                                                         firstDayOfWeek: validConfig.firstDayOfWeek,
-                                                         hasStrictBoundaries: validConfig.hasStrictBoundaries)
-                
-                let generatedData = dateGenerator.setupMonthInfoDataForStartAndEndDate(parameters)
-                months = generatedData.months
-                monthMap = generatedData.monthMap
-                totalSections = generatedData.totalSections
-                totalDays = generatedData.totalDays
-            }
+        
+        // first use the config passed in
+        // If nil, fetch the config from the datasource
+        let possibleConfig = optionalConfig ?? calendarDataSource?.configureCalendar(self)
+        
+        let validConfig: ConfigurationParameters
+        if let valid = possibleConfig {
+            validConfig = valid
+        } else {
+            assert(false, "Using default parameters. Your config should not have been nil here. In production, your dates will be an incorrect default date")
+            validConfig = ConfigurationParameters(startDate: Date(), endDate: Date().addingTimeInterval(1))
         }
+        
+        let comparison = validConfig.calendar.compare(validConfig.startDate, to: validConfig.endDate, toGranularity: .nanosecond)
+        if comparison == ComparisonResult.orderedDescending {
+            assert(false, "Error, your start date cannot be greater than your end date\n")
+            return (CalendarData(months: [], totalSections: 0, sectionToMonthMap: [:], totalDays: 0))
+        }
+        
+        // Set the new cache
+        _cachedConfiguration = validConfig
+        
+        if let
+            startMonth = calendar.startOfMonth(for: validConfig.startDate),
+            let endMonth = calendar.endOfMonth(for: validConfig.endDate) {
+            startOfMonthCache = startMonth
+            endOfMonthCache   = endMonth
+            // Create the parameters for the date format generator
+            let parameters = ConfigurationParameters(startDate: startOfMonthCache,
+                                                     endDate: endOfMonthCache,
+                                                     numberOfRows: validConfig.numberOfRows,
+                                                     calendar: calendar,
+                                                     generateInDates: validConfig.generateInDates,
+                                                     generateOutDates: validConfig.generateOutDates,
+                                                     firstDayOfWeek: validConfig.firstDayOfWeek,
+                                                     hasStrictBoundaries: validConfig.hasStrictBoundaries)
+            
+            let generatedData = dateGenerator.setupMonthInfoDataForStartAndEndDate(parameters)
+            months = generatedData.months
+            monthMap = generatedData.monthMap
+            totalSections = generatedData.totalSections
+            totalDays = generatedData.totalDays
+        }
+        
         let data = CalendarData(months: months, totalSections: totalSections, sectionToMonthMap: monthMap, totalDays: totalDays)
         return data
     }
@@ -249,12 +259,12 @@ extension JTACMonthView {
                 // ConfigParameters were changed
                 newStartOfMonth                     != oldStartOfMonth ||
                 newEndOfMonth                       != oldEndOfMonth ||
-                newDateBoundary.calendar            != _cachedConfiguration.calendar ||
-                newDateBoundary.numberOfRows        != _cachedConfiguration.numberOfRows ||
-                newDateBoundary.generateInDates     != _cachedConfiguration.generateInDates ||
-                newDateBoundary.generateOutDates    != _cachedConfiguration.generateOutDates ||
-                newDateBoundary.firstDayOfWeek      != _cachedConfiguration.firstDayOfWeek ||
-                newDateBoundary.hasStrictBoundaries != _cachedConfiguration.hasStrictBoundaries ||
+                newDateBoundary.calendar            != _cachedConfiguration?.calendar ||
+                newDateBoundary.numberOfRows        != _cachedConfiguration?.numberOfRows ||
+                newDateBoundary.generateInDates     != _cachedConfiguration?.generateInDates ||
+                newDateBoundary.generateOutDates    != _cachedConfiguration?.generateOutDates ||
+                newDateBoundary.firstDayOfWeek      != _cachedConfiguration?.firstDayOfWeek ||
+                newDateBoundary.hasStrictBoundaries != _cachedConfiguration?.hasStrictBoundaries ||
                 // Other layout information were changed
                 minimumInteritemSpacing  != calendarLayout.minimumInteritemSpacing ||
                 minimumLineSpacing       != calendarLayout.minimumLineSpacing ||

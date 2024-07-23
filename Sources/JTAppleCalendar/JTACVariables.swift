@@ -31,14 +31,24 @@ extension JTACMonthView {
     /// Remove this extra property once Xcode gets fixed.
     @IBOutlet public var ibCalendarDelegate: AnyObject? {
         get { return calendarDelegate as AnyObject? }
-        set { calendarDelegate = newValue as? JTACMonthViewDelegate }
+        set {
+            if (newValue != nil) {
+                assert(newValue as? JTACMonthViewDelegate != nil, "Error, your delegate is not of type JTACMonthViewDelegate.")
+            }
+            calendarDelegate = newValue as? JTACMonthViewDelegate
+        }
     }
     
     /// Workaround for Xcode bug that prevents you from connecting the delegate in the storyboard.
     /// Remove this extra property once Xcode gets fixed.
     @IBOutlet public var ibCalendarDataSource: AnyObject? {
         get { return calendarDataSource as AnyObject? }
-        set { calendarDataSource = newValue as? JTACMonthViewDataSource }
+        set {
+            if (newValue != nil) {
+                assert(newValue as? JTACMonthViewDataSource != nil, "Error, your dataSource is not of type JTACMonthViewDataSource.")
+            }
+            calendarDataSource = newValue as? JTACMonthViewDataSource
+        }
     }
     
     @available(*, unavailable)
@@ -56,7 +66,7 @@ extension JTACMonthView {
     }
     
     /// Returns all selected dates
-    open var selectedDates: [Date] {
+    public var selectedDates: [Date] {
         return selectedDatesSet.sorted()
     }
     

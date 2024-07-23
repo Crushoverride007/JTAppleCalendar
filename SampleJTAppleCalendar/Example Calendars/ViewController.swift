@@ -288,7 +288,7 @@ class ViewController: UIViewController {
     func handleCellConfiguration(cell: JTACDayCell?, cellState: CellState) {
         handleCellSelection(view: cell, cellState: cellState)
         handleCellTextColor(view: cell, cellState: cellState)
-//        prePostVisibility?(cellState, cell as? CellView)
+        prePostVisibility?(cellState, cell as? CellView)
     }
     
     
